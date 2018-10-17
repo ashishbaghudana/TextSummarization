@@ -11,7 +11,7 @@ def indices_from_text(language, text):
 def tensor_from_text(language, text):
     indices = indices_from_text(language, text)
     indices.append(EOD_TOKEN)
-    return torch.tensor(indices, dtype=torch.lang, device=device).view(-1, 1)
+    return torch.tensor(indices, dtype=torch.long, device=device).view(-1, 1)
 
 
 def tensors_from_pair(input_lang, target_lang, pair):

@@ -3,9 +3,11 @@ import torch
 import random
 import torch.nn as nn
 from torch import optim
+from argparse import ArgumentParser
 
-from data_structures import SOD_TOKEN, EOD_TOKEN
-from seq2seq import device, MAX_LENGTH
+from data_loader import DataLoader
+from language import SOD_TOKEN, EOD_TOKEN
+from seq2seq import device, MAX_LENGTH, EncoderRNN, AttentionDecoderRNN
 from utils import time_since
 from tensor_utils import tensors_from_pair
 
@@ -112,3 +114,45 @@ def train_iters(input_lang,
             plot_loss_avg = plot_loss_total / plot_every
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
+
+
+def main():
+    parser = ArgumentParser("Train Seq2Seq Attention Model")
+    parser.add_argument(
+        "-f",
+        "--text_dir",
+        help="Path to all the full text documents",
+        required=True)
+    parser.add_argument(
+        "-s",
+        "--summary_dir",
+        help="Path to all the summary documents",
+        required=False)
+    parser.add_argument(
+        "--hidden_units", help="Number of hidden units", type=int, default=256)
+    parser.add_argument(
+        "--dropout",
+        help="Dropout value in Attention Decoder",
+        type=float,
+        default=0.1)
+
+    args = parser.parse_args()
+    data = DataLoader(args.text_dir, args.summary_dir)
+    full_text_lang, summary_text_lang, pairs = data.load()
+
+    encoder = EncoderRNN(full_text_lang.n_words, args.hidden_units).to(device)
+    attention_decoder = AttentionDecoderRNN(
+        args.hidden_units, summary_text_lang.n_words, args.dropout)
+
+    train_iters(
+        full_text_lang,
+        summary_text_lang,
+        pairs,
+        encoder,
+        attention_decoder,
+        len(pairs),
+        print_every=5000)
+
+
+if __name__ == '__main__':
+    main()

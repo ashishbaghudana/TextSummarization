@@ -49,7 +49,7 @@ class AttentionDecoderRNN(nn.Module):
         embedded = self.dropout(embedded)
 
         attention_weights = F.softmax(
-            self.attention(torch.cat((embedded[0], hidden[0]))),
+            self.attention(torch.cat((embedded[0], hidden[0]), 1)),
             dim=1,
         )
         attention_applied = torch.bmm(

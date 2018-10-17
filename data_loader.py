@@ -4,7 +4,7 @@ from io import open
 from utils import normalize_string
 import os
 
-from data_structures import Language
+from language import Language
 
 FULL_TEXT_EXTENSION = ".text"
 SUMMARY_EXTENSION = ".summary"
