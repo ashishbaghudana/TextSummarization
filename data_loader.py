@@ -17,7 +17,9 @@ class DataLoader(object):
         if self.summary_directory is None:
             self.summary_directory = self.full_text_directory
 
-    def load(self):
+    def load(self, trim=None):
+        print('Loading data from %s and %s' % (self.full_text_directory,
+                                               self.summary_directory))
         full_text_lang = Language(type='full_text')
         summary_text_lang = Language(type='summary_text')
         pairs = []
@@ -25,6 +27,9 @@ class DataLoader(object):
             full_text_lang.add_text(doc)
             summary_text_lang.add_text(summary)
             pairs.append((doc, summary))
+            if trim and len(pairs) == trim:
+                break
+        print('Finished loading %i data samples' % len(pairs))
         return full_text_lang, summary_text_lang, pairs
 
     def _read(self, filename):
@@ -39,6 +44,12 @@ class DataLoader(object):
         return os.path.join(
             self.summary_directory,
             f"{self._get_basename(filename)}{SUMMARY_EXTENSION}")
+
+    def __len__(self):
+        return len(
+            glob(
+                os.path.join(self.full_text_directory,
+                             f"*{FULL_TEXT_EXTENSION}")))
 
     def __iter__(self):
         full_texts = glob(

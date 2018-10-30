@@ -25,6 +25,12 @@ def time_since(since, percent):
     return '%s (- %s)' % (as_minutes(s), as_minutes(rs))
 
 
+def time_string():
+    """Get time as a well formatted string"""
+    now = time.localtime(time.time())
+    return time.strftime("%Y-%m-%d %H:%M:%S", now)
+
+
 def unicode_to_ascii(s):
     """
     Turn a Unicode string to plain ASCII thanks to

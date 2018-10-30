@@ -1,27 +1,29 @@
 import time
+import os
 import torch
 import random
 import torch.nn as nn
 from torch import optim
 from argparse import ArgumentParser
+from pathlib import Path
 
 from data_loader import DataLoader
 from language import SOD_TOKEN, EOD_TOKEN
 from seq2seq import device, MAX_LENGTH, EncoderRNN, AttentionDecoderRNN
-from utils import time_since
+from utils import time_since, time_string
 from tensor_utils import tensors_from_pair
 
 teacher_forcing_ratio = 0.5
 
 
-def train(input_tensor,
-          target_tensor,
-          encoder,
-          decoder,
-          encoder_optimizer,
-          decoder_optimizer,
-          criterion,
-          max_length=MAX_LENGTH):
+def train_tensor(input_tensor,
+                 target_tensor,
+                 encoder,
+                 decoder,
+                 encoder_optimizer,
+                 decoder_optimizer,
+                 criterion,
+                 max_length=MAX_LENGTH):
     encoder_hidden = encoder.init_hidden()
 
     encoder_optimizer.zero_grad()
@@ -70,15 +72,15 @@ def train(input_tensor,
     return loss.item() / target_length
 
 
-def train_iters(input_lang,
-                target_lang,
-                pairs,
-                encoder,
-                decoder,
-                n_iters,
-                print_every=1000,
-                plot_every=100,
-                learning_rate=0.01):
+def train_iter(input_lang,
+               target_lang,
+               pairs,
+               encoder,
+               decoder,
+               n_iters,
+               print_every=1000,
+               plot_every=100,
+               learning_rate=0.001):
 
     start = time.time()
     plot_losses = []
@@ -98,8 +100,8 @@ def train_iters(input_lang,
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
-        loss = train(input_tensor, target_tensor, encoder, decoder,
-                     encoder_optimizer, decoder_optimizer, criterion)
+        loss = train_tensor(input_tensor, target_tensor, encoder, decoder,
+                            encoder_optimizer, decoder_optimizer, criterion)
         print_loss_total += loss
         plot_loss_total += loss
 
@@ -116,6 +118,72 @@ def train_iters(input_lang,
             plot_loss_total = 0
 
 
+def save_models(encoder, decoder, learning_rate, epoch, directory):
+    current_time = time.time()
+    encoder_dir = os.path.join(directory, 'model_%s' % int(current_time),
+                               'encoder')
+    decoder_dir = os.path.join(directory, 'model_%s' % int(current_time),
+                               'decoder')
+    path_encoder = Path(encoder_dir)
+    path_decoder = Path(decoder_dir)
+    path_encoder.mkdir(parents=True, exist_ok=True)
+    path_decoder.mkdir(parents=True, exist_ok=True)
+
+    torch.save(
+        encoder.state_dict(),
+        os.path.join(encoder_dir, 'encoder_%s_%s.pt' % (epoch, learning_rate)))
+
+    torch.save(
+        decoder.state_dict(),
+        os.path.join(decoder_dir, 'decoder_%s_%s.pt' % (epoch, learning_rate)))
+
+
+def train(lang_1,
+          lang_2,
+          pairs,
+          encoder,
+          decoder,
+          output_dir,
+          n_epochs=500000,
+          learning_rate=0.001,
+          print_every=100,
+          save_every=10,
+          debug=False):
+
+    print('Starting training process...')
+
+    save_every_epoch_start = time.time()
+
+    for epoch in range(1, n_epochs + 1):
+
+        start = time.time()
+
+        if debug:
+            print('Start training epoch %i at %s' % (epoch, time_string()))
+
+        # Train the particular iteration
+        train_iter(
+            lang_1,
+            lang_2,
+            pairs,
+            encoder,
+            decoder,
+            len(pairs),
+            print_every=print_every)
+
+        if debug:
+            print('Finished training epoch %i at %s' % (epoch, time_string()))
+            print('Time taken for epoch %i = %s' %
+                  (epoch, time_since(start, epoch / n_epochs)))
+
+        if epoch % save_every == 0:
+            print('Saving model at epoch %i...' % epoch)
+            print('Time taken for %i epochs = %s' %
+                  (save_every,
+                   time_since(save_every_epoch_start, epoch / n_epochs)))
+            save_models(encoder, decoder, learning_rate, epoch, output_dir)
+
+
 def main():
     parser = ArgumentParser("Train Seq2Seq Attention Model")
     parser.add_argument(
@@ -129,29 +197,37 @@ def main():
         help="Path to all the summary documents",
         required=False)
     parser.add_argument(
+        "-o", "--output_dir", help="Path to save the model", required=True)
+    parser.add_argument(
         "--hidden_units", help="Number of hidden units", type=int, default=256)
     parser.add_argument(
         "--dropout",
         help="Dropout value in Attention Decoder",
         type=float,
         default=0.1)
+    parser.add_argument(
+        "--debug",
+        help="Train the model in debug mode",
+        action="store_true",
+        required=False)
 
     args = parser.parse_args()
     data = DataLoader(args.text_dir, args.summary_dir)
-    full_text_lang, summary_text_lang, pairs = data.load()
+    full_text_lang, summary_text_lang, pairs = data.load(trim=10)
 
+    print('Creating models...')
     encoder = EncoderRNN(full_text_lang.n_words, args.hidden_units).to(device)
     attention_decoder = AttentionDecoderRNN(
-        args.hidden_units, summary_text_lang.n_words, args.dropout)
+        args.hidden_units, summary_text_lang.n_words, args.dropout).to(device)
 
-    train_iters(
+    train(
         full_text_lang,
         summary_text_lang,
         pairs,
         encoder,
         attention_decoder,
-        len(pairs),
-        print_every=5000)
+        args.output_dir,
+        debug=args.debug)
 
 
 if __name__ == '__main__':
