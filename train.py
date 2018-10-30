@@ -13,6 +13,7 @@ from seq2seq import device, MAX_LENGTH, EncoderRNN, AttentionDecoderRNN
 from utils import time_since, time_string
 from tensor_utils import tensors_from_pair
 from logging_utils import get_logger
+from evaluate import evaluate_randomly_training
 
 teacher_forcing_ratio = 0.5
 
@@ -174,6 +175,9 @@ def train(lang_1,
             'Finished training epoch %i at %s' % (epoch, time_string()))
         LOGGER.debug('Time taken for epoch %i = %s' %
                      (epoch, time_since(start, epoch / n_epochs)))
+
+        LOGGER.info('Evaluating on training set randomly...')
+        evaluate_randomly_training(pairs, encoder, decoder)
 
         if epoch % save_every == 0:
             LOGGER.info('Saving model at epoch %i...' % epoch)
