@@ -146,8 +146,7 @@ def train(lang_1,
           n_epochs=500000,
           learning_rate=0.001,
           print_every=1000,
-          save_every=5000,
-          debug=False):
+          save_every=5000):
 
     LOGGER.info('Starting training process...')
 
@@ -211,11 +210,6 @@ def main():
         required=False,
         type=int)
     parser.add_argument(
-        "--debug",
-        help="Train the model in debug mode",
-        action="store_true",
-        required=False)
-    parser.add_argument(
         "--print_every",
         help="Print every n steps",
         default=1000,
@@ -260,8 +254,7 @@ def main():
         n_epochs=args.n_epochs,
         learning_rate=args.learning_rate,
         print_every=args.print_every,
-        save_every=args.save_every,
-        debug=args.debug)
+        save_every=args.save_every)
 
 
 if __name__ == '__main__':
