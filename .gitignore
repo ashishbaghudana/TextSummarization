@@ -113,3 +113,5 @@ dmypy.json
 # custom files
 result/
 *.swp
+train.sh.o*
+train.sh.e*
