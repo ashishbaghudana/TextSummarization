@@ -165,7 +165,7 @@ def train(lang_1,
 
         # Train the particular iteration
         train_iter(
-            training_pairs
+            training_pairs,
             encoder,
             decoder,
             len(pairs),
