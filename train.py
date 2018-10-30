@@ -177,7 +177,7 @@ def train(lang_1,
                      (epoch, time_since(start, epoch / n_epochs)))
 
         LOGGER.info('Evaluating on training set randomly...')
-        evaluate_randomly_training(pairs, encoder, decoder)
+        evaluate_randomly_training(lang_1, lang_2, pairs, encoder, decoder)
 
         if epoch % save_every == 0:
             LOGGER.info('Saving model at epoch %i...' % epoch)

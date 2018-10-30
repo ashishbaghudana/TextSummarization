@@ -49,10 +49,16 @@ def evaluate(input_lang,
         return decoded_words, decoder_attentions[:di + 1]
 
 
-def evaluate_randomly_training(pairs, encoder, decoder, n=10):
+def evaluate_randomly_training(input_lang,
+                               target_lang,
+                               pairs,
+                               encoder,
+                               decoder,
+                               n=10):
     for i in range(n):
         pair = random.choice(pairs)
-        output_words, attentions = evaluate(encoder, decoder, pair[0])
+        output_words, attentions = evaluate(input_lang, target_lang, encoder,
+                                            decoder, pair[0])
         output_sentence = ' '.join(output_words)
         LOGGER.info('>>> {} === {} <<< {}'.format(pair[0], pair[1],
                                                   output_sentence))
