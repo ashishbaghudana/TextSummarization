@@ -1,8 +1,12 @@
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 from config import log_level, log_file
+
+
+LOGGER = None
 
 
 def get_logging_level():
@@ -24,7 +28,7 @@ def configure_logger(name):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Configure file handler
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_file % int(time.time()))
     file_handler.setLevel(get_logging_level())
     file_handler.setFormatter(formatter)
 
@@ -43,4 +47,7 @@ def configure_logger(name):
 
 
 def get_logger(name):
-    return configure_logger(name)
+    global LOGGER
+    if not LOGGER:
+        LOGGER = configure_logger(name)
+    return LOGGER
