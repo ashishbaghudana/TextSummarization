@@ -75,9 +75,7 @@ def train_tensor(input_tensor,
     return loss.item() / target_length
 
 
-def train_iter(input_lang,
-               target_lang,
-               pairs,
+def train_iter(training_pairs,
                encoder,
                decoder,
                n_iters,
@@ -92,10 +90,6 @@ def train_iter(input_lang,
 
     encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
-    training_pairs = [
-        tensors_from_pair(input_lang, target_lang, random.choice(pairs))
-        for _ in range(n_iters)
-    ]
     criterion = nn.NLLLoss()
 
     for iter in range(1, n_iters + 1):
@@ -159,6 +153,10 @@ def train(lang_1,
 
     save_every_epoch_start = time.time()
 
+    training_pairs = [
+        tensors_from_pair(lang_1, lang_2, pair) for pair in pairs
+    ]
+
     for epoch in range(1, n_epochs + 1):
 
         start = time.time()
@@ -167,9 +165,7 @@ def train(lang_1,
 
         # Train the particular iteration
         train_iter(
-            lang_1,
-            lang_2,
-            pairs,
+            training_pairs
             encoder,
             decoder,
             len(pairs),
@@ -242,7 +238,7 @@ def main():
         "-n",
         "--n_epochs",
         help="Number of epochs to train for",
-        default=500000,
+        default=50,
         type=int)
 
     args = parser.parse_args()
