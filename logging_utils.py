@@ -28,7 +28,7 @@ def configure_logger(name):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Configure file handler
-    file_handler = logging.FileHandler(log_file % int(time.time()))
+    file_handler = logging.FileHandler(log_file.format(int(time.time())))
     file_handler.setLevel(get_logging_level())
     file_handler.setFormatter(formatter)
 

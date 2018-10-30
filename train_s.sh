@@ -20,7 +20,7 @@ cd $PBS_O_WORKDIR
 
 # Start training process
 rm -rf train_s.sh.*
-echo "Starting the training process for CycleGANs"
+echo "Starting the training process for seq2seq"
 python train.py -f dataset/fulltext -s dataset/summary -o models/ --trim_dataset 100 --save_every 1 --print_every 5
 
 exit;
