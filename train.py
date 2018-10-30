@@ -75,25 +75,25 @@ def train_tensor(input_tensor,
     return loss.item() / target_length
 
 
-def train_iter(training_pairs,
-               encoder,
-               decoder,
-               n_iters,
-               print_every=1000,
-               plot_every=100,
-               learning_rate=0.001):
+def train_epoch(training_pairs,
+                encoder,
+                decoder,
+                print_every=1000,
+                plot_every=100,
+                learning_rate=0.001):
 
     start = time.time()
     plot_losses = []
     print_loss_total = 0
     plot_loss_total = 0
+    n_steps = len(training_pairs)
 
     encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
     criterion = nn.NLLLoss()
 
-    for iter in range(1, n_iters + 1):
-        training_pair = training_pairs[iter - 1]
+    for step in range(1, n_steps + 1):
+        training_pair = training_pairs[step - 1]
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
@@ -102,16 +102,16 @@ def train_iter(training_pairs,
         print_loss_total += loss
         plot_loss_total += loss
 
-        if iter % print_every == 0:
+        if step % print_every == 0:
             print_loss_avg = print_loss_total / print_every
             print_loss_total = 0
-            LOGGER.info('Iterations complete = %s/%s' % (iter, n_iters))
+            LOGGER.info('Iterations complete = %s/%s' % (step, n_steps))
             LOGGER.info('Loss = %s' % print_loss_avg)
             LOGGER.debug(
-                '%s (%d %d%%) %.4f' % (time_since(start, iter / n_iters), iter,
-                                       iter / n_iters * 100, print_loss_avg))
+                '%s (%d %d%%) %.4f' % (time_since(start, step / n_steps), step,
+                                       step / n_steps * 100, print_loss_avg))
 
-        if iter % plot_every == 0:
+        if step % plot_every == 0:
             plot_loss_avg = plot_loss_total / plot_every
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
@@ -163,12 +163,11 @@ def train(lang_1,
 
         LOGGER.debug('Start training epoch %i at %s' % (epoch, time_string()))
 
-        # Train the particular iteration
-        train_iter(
+        # Train the particular step
+        train_epoch(
             training_pairs,
             encoder,
             decoder,
-            len(pairs),
             print_every=print_every,
             learning_rate=learning_rate)
 
@@ -218,14 +217,14 @@ def main():
         required=False)
     parser.add_argument(
         "--print_every",
-        help="Print every n iterations",
+        help="Print every n steps",
         default=1000,
         type=int,
         required=False)
     parser.add_argument(
         "--save_every",
         help="Save model every n epochs",
-        default=5000,
+        default=5,
         required=False,
         type=int)
     parser.add_argument(
