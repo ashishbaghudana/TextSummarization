@@ -20,7 +20,7 @@ cd $PBS_O_WORKDIR
 
 # Say "Hello world!"
 rm -rf train.sh.*
-echo "Starting the training process for CycleGANs"
+echo "Starting the training process for seq2seq"
 python train.py -f dataset/fulltext -s dataset/summary -o models/
 
 exit;
