@@ -6,7 +6,6 @@ from seq2seq import MAX_LENGTH, device
 from tensor_utils import tensor_from_text
 from logging_utils import get_logger
 
-
 LOGGER = get_logger('seq2seq.evaluate')
 
 
@@ -53,8 +52,7 @@ def evaluate(input_lang,
 def evaluate_randomly_training(pairs, encoder, decoder, n=10):
     for i in range(n):
         pair = random.choice(pairs)
-        LOGGER.info('>', pair[0])
-        LOGGER.info('=', pair[1])
         output_words, attentions = evaluate(encoder, decoder, pair[0])
         output_sentence = ' '.join(output_words)
-        LOGGER.info('<', output_sentence)
+        LOGGER.info('>>> {} === {} <<< {}'.format(pair[0], pair[1],
+                                                  output_sentence))
