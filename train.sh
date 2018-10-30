@@ -19,6 +19,7 @@ source activate pytorch
 cd $PBS_O_WORKDIR
 
 # Say "Hello world!"
+rm -rf train.sh.*
 echo "Starting the training process for CycleGANs"
 python train.py -f dataset/fulltext -s dataset/summary -o models/
 
