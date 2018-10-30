@@ -5,9 +5,11 @@ from utils import normalize_string
 import os
 
 from language import Language
+from logging_utils import get_logger
 
 FULL_TEXT_EXTENSION = ".text"
 SUMMARY_EXTENSION = ".summary"
+LOGGER = get_logger('seq2seq.dataloader')
 
 
 class DataLoader(object):
@@ -18,8 +20,8 @@ class DataLoader(object):
             self.summary_directory = self.full_text_directory
 
     def load(self, trim=None):
-        print('Loading data from %s and %s' % (self.full_text_directory,
-                                               self.summary_directory))
+        LOGGER.info('Loading data from %s and %s' % (self.full_text_directory,
+                                                     self.summary_directory))
         full_text_lang = Language(type='full_text')
         summary_text_lang = Language(type='summary_text')
         pairs = []
@@ -29,7 +31,7 @@ class DataLoader(object):
             pairs.append((doc, summary))
             if trim and len(pairs) == trim:
                 break
-        print('Finished loading %i data samples' % len(pairs))
+        LOGGER.info('Finished loading %i data samples' % len(pairs))
         return full_text_lang, summary_text_lang, pairs
 
     def _read(self, filename):

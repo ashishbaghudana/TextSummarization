@@ -12,8 +12,11 @@ from language import SOD_TOKEN, EOD_TOKEN
 from seq2seq import device, MAX_LENGTH, EncoderRNN, AttentionDecoderRNN
 from utils import time_since, time_string
 from tensor_utils import tensors_from_pair
+from logging_utils import get_logger
 
 teacher_forcing_ratio = 0.5
+
+LOGGER = get_logger('seq2seq.train')
 
 
 def train_tensor(input_tensor,
@@ -108,7 +111,9 @@ def train_iter(input_lang,
         if iter % print_every == 0:
             print_loss_avg = print_loss_total / print_every
             print_loss_total = 0
-            print(
+            LOGGER.info('Iterations complete = %s/%s' % (iter, n_iters))
+            LOGGER.info('Loss = %s' % print_loss_avg)
+            LOGGER.debug(
                 '%s (%d %d%%) %.4f' % (time_since(start, iter / n_iters), iter,
                                        iter / n_iters * 100, print_loss_avg))
 
@@ -146,11 +151,11 @@ def train(lang_1,
           output_dir,
           n_epochs=500000,
           learning_rate=0.001,
-          print_every=100,
-          save_every=10,
+          print_every=1000,
+          save_every=5000,
           debug=False):
 
-    print('Starting training process...')
+    LOGGER.info('Starting training process...')
 
     save_every_epoch_start = time.time()
 
@@ -158,8 +163,7 @@ def train(lang_1,
 
         start = time.time()
 
-        if debug:
-            print('Start training epoch %i at %s' % (epoch, time_string()))
+        LOGGER.debug('Start training epoch %i at %s' % (epoch, time_string()))
 
         # Train the particular iteration
         train_iter(
@@ -169,18 +173,19 @@ def train(lang_1,
             encoder,
             decoder,
             len(pairs),
-            print_every=print_every)
+            print_every=print_every,
+            learning_rate=learning_rate)
 
-        if debug:
-            print('Finished training epoch %i at %s' % (epoch, time_string()))
-            print('Time taken for epoch %i = %s' %
-                  (epoch, time_since(start, epoch / n_epochs)))
+        LOGGER.debug(
+            'Finished training epoch %i at %s' % (epoch, time_string()))
+        LOGGER.debug('Time taken for epoch %i = %s' %
+                     (epoch, time_since(start, epoch / n_epochs)))
 
         if epoch % save_every == 0:
-            print('Saving model at epoch %i...' % epoch)
-            print('Time taken for %i epochs = %s' %
-                  (save_every,
-                   time_since(save_every_epoch_start, epoch / n_epochs)))
+            LOGGER.info('Saving model at epoch %i...' % epoch)
+            LOGGER.info('Time taken for %i epochs = %s' %
+                        (save_every,
+                         time_since(save_every_epoch_start, epoch / n_epochs)))
             save_models(encoder, decoder, learning_rate, epoch, output_dir)
 
 
@@ -206,27 +211,61 @@ def main():
         type=float,
         default=0.1)
     parser.add_argument(
+        "--trim_dataset",
+        help="Trim the dataset to a small number for testing purposes",
+        required=False,
+        type=int)
+    parser.add_argument(
         "--debug",
         help="Train the model in debug mode",
         action="store_true",
         required=False)
+    parser.add_argument(
+        "--print_every",
+        help="Print every n iterations",
+        default=1000,
+        type=int,
+        required=False)
+    parser.add_argument(
+        "--save_every",
+        help="Save model every n epochs",
+        default=5000,
+        required=False,
+        type=int)
+    parser.add_argument(
+        "-lr",
+        "--learning_rate",
+        help="Learning rate",
+        default=0.001,
+        type=float)
+    parser.add_argument(
+        "-n",
+        "--n_epochs",
+        help="Number of epochs to train for",
+        default=500000,
+        type=int)
 
     args = parser.parse_args()
     data = DataLoader(args.text_dir, args.summary_dir)
-    full_text_lang, summary_text_lang, pairs = data.load(trim=10)
+    full_text_lang, summary_text_lang, pairs = data.load(
+        trim=args.trim_dataset)
 
-    print('Creating models...')
+    LOGGER.info('Creating models...')
     encoder = EncoderRNN(full_text_lang.n_words, args.hidden_units).to(device)
     attention_decoder = AttentionDecoderRNN(
         args.hidden_units, summary_text_lang.n_words, args.dropout).to(device)
 
     train(
-        full_text_lang,
-        summary_text_lang,
-        pairs,
-        encoder,
-        attention_decoder,
-        args.output_dir,
+        lang_1=full_text_lang,
+        lang_2=summary_text_lang,
+        pairs=pairs,
+        encoder=encoder,
+        decoder=attention_decoder,
+        output_dir=args.output_dir,
+        n_epochs=args.n_epochs,
+        learning_rate=args.learning_rate,
+        print_every=args.print_every,
+        save_every=args.save_every,
         debug=args.debug)
 
 

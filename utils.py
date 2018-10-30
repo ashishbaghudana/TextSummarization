@@ -14,7 +14,7 @@ def as_minutes(s):
     return '%dm %ds' % (m, s)
 
 
-def time_since(since, percent):
+def time_since(since, percent, remaining=False):
     """
     Get time since a given time
     """
@@ -22,7 +22,10 @@ def time_since(since, percent):
     s = now - since
     es = s / (percent)
     rs = es - s
-    return '%s (- %s)' % (as_minutes(s), as_minutes(rs))
+    if remaining:
+        return '%s (- %s)' % (as_minutes(s), as_minutes(rs))
+    else:
+        return '%s' % as_minutes(s)
 
 
 def time_string():
